@@ -25,19 +25,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Nexus API", version="2.0.0", lifespan=lifespan)
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "")
-
-allowed_origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
-if FRONTEND_URL:
-    allowed_origins.append(FRONTEND_URL)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

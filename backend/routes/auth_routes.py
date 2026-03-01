@@ -13,6 +13,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/register", response_model=Token)
 async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
     try:
+        data.username = data.username.strip().lower()
         # Check existing username
         result = await db.execute(select(User).where(User.username == data.username))
         if result.scalar_one_or_none():
@@ -46,6 +47,8 @@ async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
+    data.username = data.username.strip().lower()
+    print(f"Login attempt: '{data.username}' (password length: {len(data.password)})")
     result = await db.execute(select(User).where(User.username == data.username))
     user = result.scalar_one_or_none()
 

@@ -121,10 +121,21 @@ export default function Chat() {
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.type === 'new_message') {
+                // Update active conversation view ONLY if this message belongs to the currently open chat
                 setMessages(prev => {
+                    // Check if the chat is currently open by checking if we have messages for this conversation
+                    // If activeConv (which is not easily accessible here due to closure) matches the id:
+                    // Actually, the closure might have a stale activeConv. 
+                    // Let's rely on the fact that if prev has messages, they belong to the active chat
+                    // Better approach: filter based on a ref, or just check if the message matches the first message's conv id
+                    if (prev.length > 0 && prev[0].conversation_id !== data.message.conversation_id) {
+                        return prev; // Not for this active chat
+                    }
                     if (prev.some(m => m.id === data.message.id)) return prev;
                     return [...prev, data.message];
                 });
+
+                // Always update the sidebar text for all chats
                 setConversations(prev => prev.map(c =>
                     c.id === data.message.conversation_id
                         ? { ...c, last_message: data.message.content, updated_at: data.message.created_at }

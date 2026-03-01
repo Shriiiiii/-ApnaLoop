@@ -10,6 +10,7 @@ export default function PostModal({ post, onClose, getImgUrl, getImageUrl: getIm
     const [commentText, setCommentText] = useState('');
     const [localPost, setLocalPost] = useState(post);
     const [likeAnim, setLikeAnim] = useState(false);
+    const [showComments, setShowComments] = useState(false);
 
     useEffect(() => {
         if (post) {
@@ -78,7 +79,7 @@ export default function PostModal({ post, onClose, getImgUrl, getImageUrl: getIm
                 onClick={onClose}
             >
                 <motion.div
-                    className="w-full max-w-2xl mx-4 flex flex-col rounded-2xl overflow-hidden"
+                    className="w-full max-w-2xl mx-4 flex flex-col rounded-2xl overflow-hidden relative"
                     style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', maxHeight: '90vh' }}
                     initial={{ y: 60, scale: 0.95 }}
                     animate={{ y: 0, scale: 1 }}
@@ -134,7 +135,7 @@ export default function PostModal({ post, onClose, getImgUrl, getImageUrl: getIm
                             >
                                 <Heart size={22} fill={localPost.is_liked ? '#ef4444' : 'none'} color={localPost.is_liked ? '#ef4444' : 'var(--text-secondary)'} strokeWidth={2} />
                             </motion.button>
-                            <motion.button onClick={() => document.getElementById('modal-comment-input')?.focus()} className="bg-transparent border-none cursor-pointer p-0 flex items-center" whileTap={{ scale: 0.85 }}>
+                            <motion.button onClick={() => setShowComments(!showComments)} className="bg-transparent border-none cursor-pointer p-0 flex items-center" whileTap={{ scale: 0.85 }}>
                                 <MessageCircle size={22} color="var(--text-secondary)" strokeWidth={2} />
                             </motion.button>
                             <motion.button onClick={sharePost} className="bg-transparent border-none cursor-pointer p-0 flex items-center" whileTap={{ scale: 0.85 }}>
@@ -150,50 +151,81 @@ export default function PostModal({ post, onClose, getImgUrl, getImageUrl: getIm
                         )}
                     </div>
 
-                    {/* Comments Tray */}
-                    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" style={{ maxHeight: '25vh' }}>
-                        {comments.length === 0 ? (
-                            <p className="text-center py-3 text-xs" style={{ color: 'var(--text-muted)' }}>No comments yet — be the first!</p>
-                        ) : (
-                            comments.map((c) => (
-                                <motion.div
-                                    key={c.id}
-                                    className="flex gap-2.5"
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ type: 'spring', stiffness: 200 }}
-                                >
-                                    <img src={imgUrl(c.author_avatar)} alt="" className="w-7 h-7 rounded-full flex-shrink-0 object-cover" />
-                                    <div>
-                                        <span className="text-xs font-semibold mr-1.5" style={{ color: 'var(--text-primary)' }}>{c.author_username}</span>
-                                        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{c.content}</span>
-                                        <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                                            {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            ))
-                        )}
-                    </div>
+                    {/* Glassmorphism Sliding Comment Tray */}
+                    <AnimatePresence>
+                        {showComments && (
+                            <motion.div
+                                className="absolute bottom-0 left-0 right-0 z-30 flex flex-col"
+                                style={{
+                                    background: 'rgba(20, 20, 30, 0.75)',
+                                    backdropFilter: 'blur(16px)',
+                                    borderTop: '1px solid rgba(255,255,255,0.1)',
+                                    height: '60%'
+                                }}
+                                initial={{ y: '100%', opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                exit={{ y: '100%', opacity: 0 }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            >
+                                {/* Tray Handle */}
+                                <div className="w-full flex justify-center py-2 cursor-pointer" onClick={() => setShowComments(false)}>
+                                    <div className="w-12 h-1.5 rounded-full bg-white/30" />
+                                </div>
 
-                    {/* Comment Input — fixed at bottom */}
-                    <form onSubmit={(e) => { e.preventDefault(); addComment(); }} className="flex gap-2 p-3 border-t" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-glass)' }}>
-                        <input
-                            id="modal-comment-input"
-                            value={commentText}
-                            onChange={(e) => setCommentText(e.target.value)}
-                            className="input-field flex-1 !text-sm"
-                            placeholder="Add a comment..."
-                        />
-                        <motion.button
-                            type="submit"
-                            disabled={!commentText.trim()}
-                            className="btn-primary !px-4 !py-2 text-sm disabled:opacity-30"
-                            whileTap={{ scale: 0.9 }}
-                        >
-                            Post
-                        </motion.button>
-                    </form>
+                                {/* Comments List */}
+                                <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3 pb-20">
+                                    {comments.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center h-full opacity-70">
+                                            <MessageCircle size={32} className="mb-2" />
+                                            <p className="text-sm font-medium">No comments yet</p>
+                                            <p className="text-xs">Be the first to comment!</p>
+                                        </div>
+                                    ) : (
+                                        comments.map((c) => (
+                                            <motion.div
+                                                key={c.id}
+                                                className="flex gap-3"
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                            >
+                                                <img src={imgUrl(c.author_avatar)} alt="" className="w-8 h-8 rounded-full flex-shrink-0 object-cover ring-1 ring-white/20" />
+                                                <div className="bg-white/5 rounded-2xl rounded-tl-sm px-3 py-2 flex-1">
+                                                    <div className="flex items-center justify-between mb-0.5">
+                                                        <span className="text-xs font-bold text-white">{c.author_username}</span>
+                                                        <span className="text-[10px] text-white/50">
+                                                            {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-sm text-white/90">{c.content}</p>
+                                                </div>
+                                            </motion.div>
+                                        ))
+                                    )}
+                                </div>
+
+                                {/* Fixed Input Area */}
+                                <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/40 backdrop-blur-md border-t border-white/10">
+                                    <form onSubmit={(e) => { e.preventDefault(); addComment(); }} className="flex gap-2 relative">
+                                        <input
+                                            value={commentText}
+                                            onChange={(e) => setCommentText(e.target.value)}
+                                            className="w-full bg-white/10 border border-white/20 rounded-full py-2.5 pl-4 pr-12 text-sm text-white placeholder-white/50 focus:outline-none focus:border-white/40 focus:bg-white/15 transition-all"
+                                            placeholder="Write a comment..."
+                                            autoFocus
+                                        />
+                                        <motion.button
+                                            type="submit"
+                                            disabled={!commentText.trim()}
+                                            className="absolute right-1 top-1 bottom-1 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/30 transition-colors"
+                                            whileTap={{ scale: 0.9 }}
+                                        >
+                                            <Send size={14} className="text-white relative left-[-1px]" />
+                                        </motion.button>
+                                    </form>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </motion.div>
             </motion.div>
         </AnimatePresence>

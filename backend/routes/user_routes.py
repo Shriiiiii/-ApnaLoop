@@ -13,6 +13,16 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads")
 router = APIRouter(prefix="/api/users", tags=["users"])
 
 
+@router.post("/seed")
+async def seed_database():
+    try:
+        from seed import seed
+        await seed()
+        return {"message": "Database successfully seeded via remote trigger!"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 async def _build_user_out(user: User, db: AsyncSession, current_user_id: int = None) -> UserOut:
     followers_q = await db.execute(select(func.count()).where(Follow.following_id == user.id))
     following_q = await db.execute(select(func.count()).where(Follow.follower_id == user.id))

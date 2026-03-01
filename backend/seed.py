@@ -82,7 +82,7 @@ async def seed():
                 email=ud["email"],
                 display_name=ud["display_name"],
                 bio=ud["bio"],
-                hashed_password=hash_password("password123"),
+                hashed_password=hash_password("ApnaLoop2024!"),
                 avatar_url=f"https://api.dicebear.com/7.x/avataaars/svg?seed={ud['username']}",
             )
             db.add(user)
@@ -195,7 +195,7 @@ async def seed():
     print("✅ Database seeded successfully!")
     print("   🤖 ApnaLoop AI bot created (id=1)")
     print("   Users: praveen, manu, prajwal, raviteja, rakshith, sachin, shashank, rehman, yashwanth")
-    print("   Password for all users: password123")
+    print("   Password for all users: ApnaLoop2024!")
     print("   Posts created: 12")
 
 

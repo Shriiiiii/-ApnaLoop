@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from database import get_db
@@ -15,20 +16,21 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "nexus-super-secret-key-change-in-prod
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
-
-
+import bcrypt
 import hashlib
 
-def _prehash(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+def _prehash(password: str) -> bytes:
+    # Hash to sha256 to avoid bcrypt's 72 byte limit, then return bytes for bcrypt
+    return hashlib.sha256(password.encode()).hexdigest().encode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(_prehash(plain_password), hashed_password)
+    try:
+        return bcrypt.checkpw(_prehash(plain_password), hashed_password.encode('utf-8'))
+    except Exception:
+        return False
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(_prehash(password))
+    return bcrypt.hashpw(_prehash(password), bcrypt.gensalt()).decode('utf-8')
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

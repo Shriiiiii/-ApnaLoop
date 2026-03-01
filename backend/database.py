@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import DeclarativeBase
 import os
 
-DATABASE_URL = "sqlite+aiosqlite:///" + os.path.join(os.path.dirname(__file__), "nexus.db")
+DATABASE_URL = "sqlite+aiosqlite:///" + os.path.abspath(os.path.join(os.path.dirname(__file__), "nexus.db"))
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
